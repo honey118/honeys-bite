@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout {{ $product->name }} | Honey's Bite</title>
+    <style>
+        :root{font-family:"Instrument Sans","Segoe UI",sans-serif;color:#38291f;background:#f5eee3}*{box-sizing:border-box}body{margin:0;min-width:320px}.topbar{display:flex;justify-content:space-between;gap:18px;padding:18px clamp(18px,6vw,78px);background:#543b2d;color:#fff8ee}.brand{font:600 24px Georgia,serif;color:inherit;text-decoration:none}.topbar a:not(.brand){color:#f1dec8;text-underline-offset:4px}.page{width:min(980px,100%);margin:0 auto;padding:38px 24px 64px}.eyebrow{margin:0 0 8px;color:#8b674d;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}h1{margin:0 0 26px;font:400 38px Georgia,serif}.checkout{display:grid;grid-template-columns:minmax(250px,.8fr) 1.2fr;gap:24px}.summary,.form-panel{padding:clamp(20px,4vw,34px);border:1px solid #dfd0bc;background:#fffdf9}.product-photo{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eee2d1}.photo-empty{display:grid;place-items:center;color:#8b674d}.summary h2{margin:18px 0 8px;font:400 25px Georgia,serif}.price{margin:0;color:#684a34;font-size:18px;font-weight:700}.stock{margin:8px 0 0;color:#76685e;font-size:13px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.field{min-width:0}.field-wide{grid-column:1/-1}label,.legend{display:block;margin-bottom:8px;color:#49382d;font-size:13px;font-weight:650}.field-hint{display:block;margin-top:6px;color:#76685e;font-size:12px}.radio-group{display:flex;gap:18px}.radio-option{display:flex;align-items:center;gap:8px}.radio-option label{margin:0;font-weight:400}.radio-option input{accent-color:#654733}input[type=text],input[type=tel],input[type=number],textarea{width:100%;min-height:44px;padding:11px 12px;border:1px solid #d9cbbb;border-radius:3px;background:#fffefa;color:#35271f;font:inherit;font-size:14px}textarea{resize:vertical}.field-error{margin:7px 0 0;color:#9d382e;font-size:12px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;margin-top:24px;padding:0 20px;border:0;border-radius:3px;background:#654733;color:#fffaf3;font:inherit;font-size:14px;font-weight:700;cursor:pointer}.button:hover{background:#503727}.error-summary{margin-bottom:18px;padding:12px 14px;border:1px solid #d6a39b;background:#fbefed;color:#843c33;font-size:13px}.text-link{margin-left:14px;color:#654733;font-size:13px;text-underline-offset:3px}@media(max-width:700px){.page{padding:28px 16px 48px}.checkout{grid-template-columns:1fr}.summary{display:grid;grid-template-columns:minmax(100px,.55fr) 1fr;align-items:center;gap:16px}.summary h2{margin-top:0}.product-photo{grid-row:span 3}h1{font-size:33px}}@media(max-width:460px){.form-grid{grid-template-columns:1fr}.field-wide{grid-column:auto}.radio-group{flex-direction:column;gap:12px}.summary{grid-template-columns:1fr}.product-photo{grid-row:auto}}
+    </style>
+    @include('partials.responsive-polish')
+</head>
+<body>
+    <header class="topbar"><a class="brand" href="{{ route('catalog.index') }}">Honey's Bite</a><a href="{{ route('orders.index') }}">Pesanan saya</a></header>
+    <main class="page"><p class="eyebrow">Checkout satu produk</p><h1>Lengkapi pesanan Anda</h1>
+        <div class="checkout">
+            <section class="summary" aria-label="Ringkasan produk">
+                @if ($product->photo_path)<img class="product-photo" src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($product->photo_path) }}" alt="Foto {{ $product->name }}">@else<div class="product-photo photo-empty" aria-hidden="true">Honey's Bite</div>@endif
+                <div><h2>{{ $product->name }}</h2><p class="price">Rp{{ number_format((float) $product->price, 0, ',', '.') }}</p><p class="stock">Stok tersedia: {{ $product->stock }}</p></div>
+            </section>
+            <section class="form-panel" aria-label="Data pesanan">
+                @if ($errors->any())<div class="error-summary" role="alert">Periksa kembali data pesanan Anda.</div>@endif
+                <form method="POST" action="{{ route('checkout.store', $product) }}">
+                    @csrf
+                    @error('product')<p class="field-error" role="alert">{{ $message }}</p>@enderror
+                    <div class="form-grid">
+                        <div class="field field-wide"><label for="quantity">Jumlah</label><input id="quantity" name="quantity" type="number" min="1" max="2147483647" step="1" value="{{ old('quantity', 1) }}" required aria-invalid="{{ $errors->has('quantity') ? 'true' : 'false' }}" @if ($errors->has('quantity')) aria-describedby="quantity-error" @endif>@error('quantity')<p class="field-error" id="quantity-error">{{ $message }}</p>@enderror</div>
+                        <fieldset class="field field-wide" style="padding:0;border:0;margin:0"><legend class="legend">Metode pemenuhan</legend><div class="radio-group"><span class="radio-option"><input id="pickup" name="fulfillment_method" type="radio" value="pickup" @checked(old('fulfillment_method', 'pickup') === 'pickup') required><label for="pickup">Ambil sendiri (tanpa biaya)</label></span><span class="radio-option"><input id="delivery" name="fulfillment_method" type="radio" value="delivery" @checked(old('fulfillment_method') === 'delivery')><label for="delivery">Delivery</label></span></div>@error('fulfillment_method')<p class="field-error">{{ $message }}</p>@enderror</fieldset>
+                        <fieldset class="field field-wide" style="padding:0;border:0;margin:0"><legend class="legend">Metode pembayaran</legend><div class="radio-group"><span class="radio-option"><input id="payment_cod" name="payment_method" type="radio" value="cod" @checked(old('payment_method', 'cod') === 'cod') required><label for="payment_cod">COD (bayar saat diterima/diambil)</label></span><span class="radio-option"><input id="payment_transfer" name="payment_method" type="radio" value="bank_transfer" @checked(old('payment_method') === 'bank_transfer')><label for="payment_transfer">Transfer bank (simulasi)</label></span><span class="radio-option"><input id="payment_qris" name="payment_method" type="radio" value="qris_demo" @checked(old('payment_method') === 'qris_demo')><label for="payment_qris">QRIS (simulasi)</label></span></div>@error('payment_method')<p class="field-error">{{ $message }}</p>@enderror</fieldset>
+                        <div class="field"><label for="recipient_name">Nama penerima</label><input id="recipient_name" name="recipient_name" type="text" value="{{ old('recipient_name') }}" autocomplete="name" maxlength="255"><span class="field-hint">Wajib diisi untuk delivery.</span>@error('recipient_name')<p class="field-error">{{ $message }}</p>@enderror</div>
+                        <div class="field"><label for="recipient_phone">Nomor kontak penerima</label><input id="recipient_phone" name="recipient_phone" type="tel" value="{{ old('recipient_phone') }}" autocomplete="tel" maxlength="40"><span class="field-hint">Wajib diisi untuk delivery.</span>@error('recipient_phone')<p class="field-error">{{ $message }}</p>@enderror</div>
+                        <div class="field field-wide"><label for="delivery_address">Alamat pengiriman</label><textarea id="delivery_address" name="delivery_address" rows="3" maxlength="2000" autocomplete="street-address">{{ old('delivery_address') }}</textarea><span class="field-hint">Wajib diisi untuk delivery. Tarif delivery dihitung otomatis.</span>@error('delivery_address')<p class="field-error">{{ $message }}</p>@enderror</div>
+                    </div>
+                    <button class="button" type="submit">Buat pesanan</button><a class="text-link" href="{{ route('catalog.index') }}">Kembali ke katalog</a>
+                </form>
+            </section>
+        </div>
+    </main>
+</body>
+</html>
